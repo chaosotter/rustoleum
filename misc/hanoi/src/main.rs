@@ -40,6 +40,17 @@ fn print_board(board: &Board) {
     println!();
 }
 
+fn get_post(term: &Term) -> Option<i32> {
+    loop {
+        let ch = term.read_char().expect("Terminal error");
+        if ch >= '1' && ch <= '3' {
+            return Some((ch as i32) - ('1' as i32));
+        } else if ch == 'q' {
+            return None
+        }
+    }
+}
+
 fn main() {
     println!("Towers of Hanoi");
     println!();
@@ -64,29 +75,34 @@ fn main() {
         print_board(&board);
 
         write!(term, "\x1b[37mMove from ").expect("Terminal error");
-        let from: i32 = loop {
-            let ch = term.read_char().expect("Terminal error");
-            if ch >= '1' && ch <= '3' {
-                break (ch as i32) - ('1' as i32)
-            } else if ch == 'q' {
-                break -1
-            }
+        let from = match get_post(&term) {
+            Some(disc) => disc,
+            None => break
         };
-        if from < 0 {
-            break;
+        
+        write!(term, "\x1b[97m{}\x1b[37m to ", from+1).expect("Terminal error");
+        let to: i32 = match get_post(&term) {
+            Some(disc) => disc,
+            None => break
+        };
+
+        if from == to {
+            continue;
+        } else if board[from as usize].len() == 0 {
+            continue;
+        } else if board[to as usize].len() > 0 {
+            let from_size = board[from as usize][0];
+            let to_size = board[to as usize][0];
+            if from_size > to_size {
+                continue;
+            }
         }
 
-        write!(term, "\x1b[97m{}\x1b[37m to ", from+1).expect("Terminal error");
-        let to: i32 = loop {
-            let ch = term.read_char().expect("Terminal error");
-            if ch >= '1' && ch <= '3' {
-                break (ch as i32) - ('1' as i32)
-            } else if ch == 'q' {
-                break -1
-            }
-        };
-        if to < 0 {
-            break;
-        }
+        let disc = board[from as usize].remove(0);
+        board[to as usize].insert(0, disc);
+    }
+
+    if board[2].len() == (discs as usize) {
+        println!("\x1b[2J\x1b[H\x1b[97mYou won!");
     }
 }
