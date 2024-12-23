@@ -120,7 +120,7 @@ impl Board {
                 let x = col*2 + 4;
                 let y = row + 2;
                 match self.get(col, row) {
-                    EMPTY => draw_text(x, y, WHITE, "·"),
+                    EMPTY => draw_text(x, y, WHITE, if self.is_valid(col, row, HUMAN) { "?" } else { "·" }),
                     HUMAN => draw_text(x, y, LT_RED,"⦁"),
                     COMPUTER => draw_text(x, y, LT_BLUE, "⦁"),
                     _ => panic!("Internal error in board state")
@@ -133,30 +133,96 @@ impl Board {
     }
 
     // get returns the value of the square at the given column and row.
-    // The coordinates are zero-based.
     fn get(&self, col: i32, row: i32) -> u8 {
         self.squares[(row*8 + col) as usize]
     }
 
     // set sets the square at the given column and row to the given value.
-    // The coordinates are zero-based.
     fn set(&mut self, col: i32, row: i32, value: u8) {
         self.squares[(row*8 + col) as usize] = value;
+    }
+
+    // is_valid checks whether the given (column, row) is a valid move for the
+    // given player.
+    fn is_valid(&self, col: i32, row: i32, player: u8) -> bool {
+        if self.get(col, row) == EMPTY {
+            for dir in 0..8 {
+                if self.is_valid_dir(col, row, player, dir) {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    // is_valid_dir checks whether the given (column, row) is a valid move for
+    // the given player in the given direction.  We assume that we have already
+    // checked that the space is empty.
+    fn is_valid_dir(&self, col: i32, row: i32, player: u8, dir: i32) -> bool {
+        let other = player ^ 0b11;  // 1 -> 2, 2 -> 1
+        let mut this = row*8 + col;
+        let mut found = false;
+        loop {
+            this += OFFSETS[dir as usize];
+            if (this < 0) || (this >= 64) {
+                return false;
+            }
+            let val = self.squares[this as usize];
+            if val == player {
+                return found;
+            } else if val == other {
+                found = true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    fn get_move(&mut self, term: &mut Term) -> Option<i32> {
+        loop {
+            self.draw();
+            draw_text(28, 6, WHITE, "Row (a-h)? ");
+            term.flush().expect("Terminal error");
+            let mut row = -1;
+            while row == -1 {
+                let ch = term.read_char().expect("Terminal error");
+                if ch == 'q' {
+                    return None;
+                } else if (ch >= 'a') && (ch <= 'h') {
+                    row = (ch as i32) - ('a' as i32);
+                    draw_text(39, 6, LT_WHITE, format!("{}", ch).as_str());
+                }
+            };
+
+            let mut col = -1;
+            draw_text(28, 7, WHITE, "Col (1-8)? ");
+            term.flush().expect("Terminal error");
+            while col == -1 {
+                let ch = term.read_char().expect("Terminal error");
+                if ch == 'q' {
+                    return None;
+                } else if (ch >= '1') && (ch <= '8') {
+                    col = (ch as i32) - ('1' as i32);
+                    draw_text(39, 7, LT_WHITE, format!("{}", ch).as_str());
+                }
+            };
+
+            if self.is_valid(col, row, HUMAN) {
+                return Some(row*8 + col);
+            }
+            draw_text(28, 9, LT_YELLOW, "Invalid move!");
+            term.read_char().expect("Terminal error");
+        }
     }
 }
 
 fn main() {
-    println!("Hello, world!");
-
     let mut board = Board::new();
-    board.draw();
-
     let mut term = Term::stdout();
     loop {
-        let ch = term.read_char().expect("Terminal error");
-        if ch == 'q' {
-            break;
+        match board.get_move(&mut term) {
+            Some(loc) => println!("MOVE TO {}", loc),
+            None => break
         }
-        println!("Char: [{}], Code: {}", ch, ch as i32);
     }
 }
