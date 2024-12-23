@@ -73,6 +73,12 @@ fn set_color(color: u8) {
     print!("\x1b[{}m", color);
 }
 
+const EMPTY: u8 = 0;
+const HUMAN: u8 = 1;
+const COMPUTER: u8 = 2;
+
+const OFFSETS: [i32; 8] = [ 1, -7, -8, -9, -1, 7, 8, 9 ];
+
 // Board represents the state of the board.  For ease of coding, we use
 // a single-dimensional array of 64 elements, each of which is 0 for empty,
 // 1 for the human player, or 2 for the computer player.
@@ -83,35 +89,59 @@ struct Board {
     scores: [i32; 2]
 }
 
-const Human: u8 = 1;
-const Computer: u8 = 2;
-
 impl Board {
     // new returns a new Board with the initial pieces placed.
     fn new() -> Self {
         let mut board = Board {
-            squares: [0; 64],
-            scores: [0, 0]
+            squares: [EMPTY; 64],
+            scores: [2, 2]
         };
-        board.set(3, 3, Human);
-        board.set(4, 4, Human);
-        board.set(3, 4, Computer);
-        board.set(4, 3, Computer);
+        board.set(3, 3, HUMAN);
+        board.set(4, 4, HUMAN);
+        board.set(3, 4, COMPUTER);
+        board.set(4, 3, COMPUTER);
         board
     }
 
     // draw draws the board on the screen.
     fn draw(&self) {
         clear_screen();
-        draw_box(1, 1, 19, 10, GRAY);
-        draw_text(3, 0, GREEN, "1 2 3 4 5 6 7 8");        
-        draw_text(3, 11, GREEN, "1 2 3 4 5 6 7 8");        
+        draw_box(2, 1, 19, 10, GRAY);
+        draw_text(4, 0, GREEN, "1 2 3 4 5 6 7 8");        
+        draw_text(4, 11, GREEN, "1 2 3 4 5 6 7 8");    
+        for y in 0..8 {
+            let ch = ((y as u8)+97) as char;
+            draw_text(0, y+2, GREEN, &format!("{}", ch));
+            draw_text(22, y+2, GREEN, &format!("{}", ch));
+        }
+
+        for row in 0..8 {
+            for col in 0..8 {
+                let x = col*2 + 4;
+                let y = row + 2;
+                match self.get(col, row) {
+                    EMPTY => draw_text(x, y, WHITE, "·"),
+                    HUMAN => draw_text(x, y, LT_RED,"⦁"),
+                    COMPUTER => draw_text(x, y, LT_BLUE, "⦁"),
+                    _ => panic!("Internal error in board state")
+                }
+            }
+        }
+
+        draw_text(28, 2, LT_RED, format!("Human:    {}", self.scores[0]).as_str());
+        draw_text(28, 3, LT_BLUE, format!("Computer: {}", self.scores[1]).as_str());
     }
 
-    // set sets the square at the given (x, y) coordinates to the given value.
+    // get returns the value of the square at the given column and row.
     // The coordinates are zero-based.
-    fn set(&mut self, x: i32, y: i32, value: u8) {
-        self.squares[(y*8 + x) as usize] = value;
+    fn get(&self, col: i32, row: i32) -> u8 {
+        self.squares[(row*8 + col) as usize]
+    }
+
+    // set sets the square at the given column and row to the given value.
+    // The coordinates are zero-based.
+    fn set(&mut self, col: i32, row: i32, value: u8) {
+        self.squares[(row*8 + col) as usize] = value;
     }
 }
 
