@@ -65,11 +65,11 @@ impl Board {
 
         loop {
             col += Self::OFFSETS[dir][0];
-            if (col < 0) || (col >= 8) {
+            if !(0..8).contains(&col) {
                 return 0;
             }
             row += Self::OFFSETS[dir][1];
-            if (row < 0) || (row >= 8) {
+            if !(0..8).contains(&row) {
                 return 0;
             }
 

@@ -3,6 +3,7 @@
 //! respond to individual keystrokes.
 
 use console::Term;
+use std::cmp::Ordering;
 use std::io;
 
 use crate::board;
@@ -148,7 +149,7 @@ impl Screen {
                 let ch = self.term.read_char().expect("Terminal error");
                 if ch == 'q' {
                     return None;
-                } else if (ch >= 'a') && (ch <= 'h') {
+                } else if ('a'..='h').contains(&ch) {
                     row = (ch as i32) - ('a' as i32);
                     self.draw_text(39, 8, Self::LT_WHITE, format!("{}", ch).as_str()).unwrap_or(());
                 }
@@ -160,7 +161,7 @@ impl Screen {
                 let ch = self.term.read_char().expect("Terminal error");
                 if ch == 'q' {
                     return None;
-                } else if (ch >= '1') && (ch <= '8') {
+                } else if ('1'..='8').contains(&ch) {
                     col = (ch as i32) - ('1' as i32);
                     self.draw_text(39, 9, Self::LT_WHITE, format!("{}", ch).as_str()).unwrap_or(());
                 }
@@ -185,12 +186,10 @@ impl Screen {
     pub fn report_winner(&mut self, board: &board::Board) -> io::Result<()> {
         let human = board.get_score(board::Board::HUMAN);
         let computer = board.get_score(board::Board::COMPUTER);
-        let text = if human > computer {
-            "You win!"
-        } else if human < computer {
-            "I win!"
-        } else {
-            "It's a tie!"
+        let text = match human.cmp(&computer) {
+            Ordering::Greater => "You win!",
+            Ordering::Less => "I win!",
+            Ordering::Equal => "It's a tie!",
         };
         self.draw_text(28, 8, Self::LT_WHITE, text)?;
         self.goto_xy(0, 20)
