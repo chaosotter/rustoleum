@@ -36,18 +36,18 @@ impl Screen {
     //const LT_CYAN: u8 = Screen::CYAN + 60;
     const LT_WHITE: u8 = Screen::WHITE + 60;
 
-    /// new creates a new Screen instance.
+    /// Creates a new Screen instance.
     pub fn new() -> Self {
         Self { term: Term::stdout() }
     }
 
-    // clear_screen clears the screen, homes the cursor, and sets the current
-    // color to bright white.
+    // Clears the screen, homes the cursor, and sets the current color to
+    // bright white.
     fn clear_screen(&mut self) -> io::Result<()> {
         self.term.write_str(format!("\x1b[2J\x1b[H\x1b[{}m", Self::LT_WHITE).as_str())
     }
 
-    // draw_board draws the given Board on the screen.
+    // Draws the given Board on the screen.
     pub fn draw_board(&mut self, board: &board::Board) -> io::Result<()> {
         self.clear_screen()?;
         self.draw_box(2, 1, 19, 10, Self::GRAY)?;
@@ -61,10 +61,9 @@ impl Screen {
 
         for row in 0..8 {
             for col in 0..8 {
-                let loc = row*8 + col;
                 let x = col*2 + 4;
                 let y = row + 2;
-                match board.get(loc) {
+                match board.get(col, row) {
                     board::Board::EMPTY => self.draw_text(x, y, Self::WHITE, ".")?,
                     board::Board::HUMAN => self.draw_text(x, y, Self::LT_RED, "⓿")?,
                     board::Board::COMPUTER => self.draw_text(x, y, Self::LT_BLUE, "⓿")?,
@@ -80,8 +79,8 @@ impl Screen {
         self.draw_text(28, 3, Self::LT_BLUE, computer.as_str())
     }
 
-    // draw_box draws a box in the given color and at the given 0-based (x, y)
-    // coordinates.
+    /// Draws a box in the given color and at the given 0-based (x, y)
+    /// coordinates.
     fn draw_box(&mut self, x: i32, y: i32, width: i32, height: i32, color: u8) -> io::Result<()> {
         if width < 2 || height < 2 {
             return Ok(());
@@ -110,22 +109,22 @@ impl Screen {
         self.term.write_str("┘")
     }
 
-    // draw_text draws text in the given color and at the given 0-based (x, y)
-    // coordinates.
+    /// Draws text in the given color and at the given 0-based (x, y)
+    /// coordinates.
     fn draw_text(&mut self, x: i32, y: i32, color: u8, text: &str) -> io::Result<()> {
         self.goto_xy(x, y)?;
         self.set_color(color)?;
         self.term.write_str(text)
     }
 
-    // draw_valid_moves indicates the valid player moves on the screen.
+    /// Indicates the valid player moves on the screen.
     fn draw_valid_moves(&mut self, board: &board::Board) -> io::Result<()> {
         for row in 0..8 {
             for col in 0..8 {
-                let loc = row*8 + col;
                 let x = col*2 + 4;
                 let y = row + 2;
-                if (board.get(loc) == board::Board::EMPTY) && (board.count_move(loc, board::Board::HUMAN) > 0) {
+                if (board.get(col, row) == board::Board::EMPTY)
+                    && (board.count_move(col, row, board::Board::HUMAN) > 0) {
                     self.draw_text(x, y, Self::RED, "?")?;
                 }
             }
@@ -133,14 +132,14 @@ impl Screen {
         Ok(())
     }
 
-    // goto_xy moves the cursor to the given 0-based (x, y) coordinates.
+    /// Moves the cursor to the given 0-based (x, y) coordinates.
     fn goto_xy(&mut self, x: i32, y: i32) -> io::Result<()> {
         self.term.write_str(format!("\x1b[{};{}H", y+1, x+1).as_str())
     }
 
-    // read_move reads a row (a-h) and column (1-8) from the user and
-    // translates it into a location (0-63).  Only valid moves are accepted.
-    pub fn read_move(&mut self, board: &board::Board) -> Option<i32> {
+    /// Reads a row (a-h) and column (1-8) from the user and translates it into
+    /// a zero-based (col, row) tuple.  Only valid moves are accepted.
+    pub fn read_move(&mut self, board: &board::Board) -> Option<(i32, i32)> {
         loop {
             self.draw_valid_moves(board).unwrap_or(());
             self.draw_text(28, 8, Self::WHITE, "Row (a-h)? ").unwrap_or(());
@@ -167,27 +166,42 @@ impl Screen {
                 }
             };
 
-            let loc = row*8 + col;
-            if board.count_move(loc, board::Board::HUMAN) > 0 {
-                return Some(loc);
+            if board.count_move(col, row, board::Board::HUMAN) > 0 {
+                return Some((col, row));
             }
             self.draw_text(28, 11, Self::LT_YELLOW, "Invalid move!").unwrap_or(());
             self.term.read_char().expect("Terminal error");
+            self.draw_board(board).unwrap_or(());
         }
     }
 
-    // report_move informs the player of the computer's move.
-    pub fn report_move(&mut self, loc: i32) {
-        let text = format!("I moved to {}{}.", (((loc/8) as u8) + 97) as char, (loc%8) + 1);
-        self.draw_text(28, 6, Self::LT_WHITE, text.as_str()).unwrap_or(());
+    /// Informs the player of the computer's move.
+    pub fn report_move(&mut self, col: i32, row: i32) -> io::Result<()> {
+        let text = format!("I moved to {}{}.", ((row as u8) + 97) as char, col + 1);
+        self.draw_text(28, 6, Self::LT_WHITE, text.as_str())
     }
 
-    // set_color sets the current terminal color to the one given.
+    /// Reports on the winner of the game.
+    pub fn report_winner(&mut self, board: &board::Board) -> io::Result<()> {
+        let human = board.get_score(board::Board::HUMAN);
+        let computer = board.get_score(board::Board::COMPUTER);
+        let text = if human > computer {
+            "You win!"
+        } else if human < computer {
+            "I win!"
+        } else {
+            "It's a tie!"
+        };
+        self.draw_text(28, 8, Self::LT_WHITE, text)?;
+        self.goto_xy(0, 20)
+    }
+
+    /// Sets the current terminal color to the one given.
     fn set_color(&mut self, color: u8) -> io::Result<()> {
         self.term.write_str(format!("\x1b[{}m", color).as_str())
     }
 
-    // wait_for_key waits for the user to press a key, then discards it.
+    /// Waits for the user to press a key, then discards it.
     pub fn wait_for_key(&mut self) {
         self.draw_text(28, 9, Self::LT_WHITE, "Press any key...").unwrap_or(());
         self.term.read_char().expect("Terminal error");
