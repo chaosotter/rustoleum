@@ -9,7 +9,7 @@ fn main() {
     let mut last_move = (-1, -1);
 
     while !board.game_over() {
-        turn ^= 0b11;  // 1 -> 2, 2 -> 1
+        turn ^= 0b11; // 1 -> 2, 2 -> 1
         let turn_moves = board.get_moves(turn);
         if turn_moves.is_empty() {
             continue;
@@ -23,7 +23,7 @@ fn main() {
         if turn == board::Board::HUMAN {
             match screen.read_move(&board) {
                 Some(move_) => board.do_move(move_.0, move_.1, board::Board::HUMAN),
-                None => break
+                None => break,
             }
             screen.draw_board(&board).unwrap_or(());
             screen.wait_for_key();

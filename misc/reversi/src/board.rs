@@ -8,36 +8,36 @@
 /// We keep track of the score explicitly simply for the sake of efficiency.
 pub struct Board {
     squares: [[u8; 8]; 8],
-    scores: [i32; 2]
+    scores: [i32; 2],
 }
 
 impl Board {
     pub const EMPTY: u8 = 0;
     pub const HUMAN: u8 = 1;
     pub const COMPUTER: u8 = 2;
-    
+
     /// The deltas to apply to a row and column to move in some direction.
     const OFFSETS: [[i32; 2]; 8] = [
-        [ 1,  0],  // right
-        [ 1, -1],  // up & right
-        [ 0, -1],  // up
-        [-1, -1],  // up & left
-        [-1,  0],  // left
-        [-1,  1],  // down & left
-        [ 0,  1],  // down
-        [ 1,  1],  // down & right
+        [1, 0],   // right
+        [1, -1],  // up & right
+        [0, -1],  // up
+        [-1, -1], // up & left
+        [-1, 0],  // left
+        [-1, 1],  // down & left
+        [0, 1],   // down
+        [1, 1],   // down & right
     ];
 
     /// The weights to assign to moves to each space on the board.  These
     /// values were assigned by rough experience in game play.
     const VALUES: [[i32; 8]; 8] = [
         [10, 2, 8, 6, 6, 8, 2, 10],
-        [ 2, 1, 3, 4, 4, 3, 1,  2],
-        [ 8, 3, 7, 5, 5, 7, 3,  8],
-        [ 6, 4, 5, 1, 1, 5, 4,  6],
-        [ 6, 4, 5, 1, 1, 5, 4,  6],
-        [ 8, 3, 7, 5, 5, 7, 3,  8],
-        [ 2, 1, 3, 4, 4, 3, 1,  2],
+        [2, 1, 3, 4, 4, 3, 1, 2],
+        [8, 3, 7, 5, 5, 7, 3, 8],
+        [6, 4, 5, 1, 1, 5, 4, 6],
+        [6, 4, 5, 1, 1, 5, 4, 6],
+        [8, 3, 7, 5, 5, 7, 3, 8],
+        [2, 1, 3, 4, 4, 3, 1, 2],
         [10, 2, 8, 6, 6, 8, 2, 10],
     ];
 
@@ -45,7 +45,7 @@ impl Board {
     pub fn new() -> Self {
         let mut board = Self {
             squares: [[Self::EMPTY; 8]; 8],
-            scores: [2, 2]
+            scores: [2, 2],
         };
         board.set(3, 3, Self::HUMAN);
         board.set(4, 4, Self::HUMAN);
@@ -58,7 +58,7 @@ impl Board {
     /// direction if they were to move to (col, row).  We assume that we have
     /// already checked that the space is empty.
     fn count_in_dir(&self, col: i32, row: i32, player: u8, dir: usize) -> i32 {
-        let other = player ^ 0b11;  // 1 -> 2, 2 -> 1
+        let other = player ^ 0b11; // 1 -> 2, 2 -> 1
         let mut col = col;
         let mut row = row;
         let mut found = 0;
@@ -102,7 +102,7 @@ impl Board {
     /// accordingly.  We assume that the move is already known to be valid.
     pub fn do_move(&mut self, col: i32, row: i32, player: u8) {
         self.set(col, row, player);
-        self.scores[(player-1) as usize] += 1;
+        self.scores[(player - 1) as usize] += 1;
         for dir in 0..8 {
             if self.count_in_dir(col, row, player, dir) > 0 {
                 self.flip_dir(col, row, player, dir);
@@ -114,10 +114,10 @@ impl Board {
     /// adjusts the scores accordingly.
     fn flip(&mut self, col: i32, row: i32) {
         let old = self.get(col, row);
-        let new = old ^ 0b11;  // 1 -> 2, 2 -> 1
+        let new = old ^ 0b11; // 1 -> 2, 2 -> 1
         self.set(col, row, new);
-        self.scores[(old-1) as usize] -= 1;
-        self.scores[(new-1) as usize] += 1;
+        self.scores[(old - 1) as usize] -= 1;
+        self.scores[(new - 1) as usize] += 1;
     }
 
     /// Flips the pieces in the given direction to that of the other player
@@ -140,8 +140,7 @@ impl Board {
     /// player can make a valid move.  This condition is sufficient to detect
     /// both a full board and total defeat.
     pub fn game_over(&self) -> bool {
-        self.get_moves(Self::HUMAN).is_empty()
-            && self.get_moves(Self::COMPUTER).is_empty()
+        self.get_moves(Self::HUMAN).is_empty() && self.get_moves(Self::COMPUTER).is_empty()
     }
 
     /// Returns the value of the square at the given location.
@@ -165,7 +164,7 @@ impl Board {
     /// Returns the score for the given player.
     pub fn get_score(&self, player: u8) -> Option<i32> {
         if player == Self::HUMAN || player == Self::COMPUTER {
-            Some(self.scores[(player-1) as usize])
+            Some(self.scores[(player - 1) as usize])
         } else {
             None
         }
