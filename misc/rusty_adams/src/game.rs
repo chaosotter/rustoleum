@@ -6,6 +6,7 @@
 //! after I learn it.
 
 mod parser;
+pub mod writer;
 
 use crate::tokenizer;
 
