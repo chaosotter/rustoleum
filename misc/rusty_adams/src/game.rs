@@ -1,6 +1,6 @@
 //! This module is the heart of the interpreter and contains the core data
 //! structures for a Scott Adams game and the methods that manipulate it.
-//! 
+//!
 //! We keep actual I/O strictly partitioned away from this module, as the
 //! intention is to make this whole mess work with WebAssembly at some point
 //! after I learn it.
