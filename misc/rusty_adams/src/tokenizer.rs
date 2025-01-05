@@ -10,6 +10,7 @@
 //! data as runes, since this file format is from the 8-bit days.
 
 use std::collections::VecDeque;
+use std::fmt::{Display, Error, Formatter};
 
 /// There are only two kinds of token, Int and Str.
 #[derive(Debug)]
@@ -47,7 +48,7 @@ impl Stream {
         for offset in 0..data.len() {
             let ch = *data.get(offset).unwrap() as char;
             match state {
-        		// Init state: Not currently reading any token.
+                // Init state: Not currently reading any token.
                 State::Init => {
                     if ch.is_ascii_whitespace() {
                         // pass
@@ -60,35 +61,35 @@ impl Stream {
                     } else if ch == '"' {
                         state = State::Quote;
                     } else {
-                        return Err(TokenError{ch, offset, state});
+                        return Err(TokenError { ch, offset, state });
                     }
-                },
+                }
 
-        		// Sign state: Read the initial '-' of a negative integer.
+                // Sign state: Read the initial '-' of a negative integer.
                 State::Sign => {
                     if ch.is_ascii_digit() {
                         acc.push(ch);
                         state = State::Num;
                     } else {
-                        return Err(TokenError{ch, offset, state});
+                        return Err(TokenError { ch, offset, state });
                     }
-                },
+                }
 
                 // Num state: Now reading an integer.
                 State::Num => {
                     if ch.is_ascii_whitespace() {
                         match acc.parse::<i32>() {
                             Ok(val) => tokens.push_back(Token::Int(val)),
-                            Err(_) => return Err(TokenError{ch, offset, state}),
+                            Err(_) => return Err(TokenError { ch, offset, state }),
                         }
                         acc.clear();
                         state = State::Init;
                     } else if ch.is_ascii_digit() {
                         acc.push(ch);
                     } else {
-                       return Err(TokenError{ch, offset, state});
+                        return Err(TokenError { ch, offset, state });
                     }
-                },
+                }
 
                 // Quote state: Read the initial '"' of a string.
                 State::Quote => {
@@ -101,21 +102,21 @@ impl Stream {
                     } else {
                         acc.push(ch);
                     }
-                },
+                }
 
                 // Escape state: Read the next character in a string unconditionally.
                 State::Escape => {
                     acc.push(ch);
                     state = State::Quote;
-                },
+                }
             }
         }
-        Ok(Stream{tokens})
+        Ok(Stream { tokens })
     }
 
     /// Checks if we're at the end of the stream.
     pub fn done(&self) -> bool {
-        self.tokens.len() == 0
+        self.tokens.is_empty()
     }
 
     /// Returns the next integer in the stream.
@@ -133,7 +134,7 @@ impl Stream {
             Some(Token::Str(val)) => Ok(val),
             Some(Token::Int(_)) => Err("Expected a string, found an integer".to_string()),
             None => Err("Unexpected end of stream".to_string()),
-        }        
+        }
     }
 
     /// Returns the next token.
@@ -149,9 +150,13 @@ pub struct TokenError {
     state: State,
 }
 
-impl TokenError {
+impl Display for TokenError {
     /// Makes a tokenization error human-readable.
-    pub fn to_string(&self) -> String {
-        format!("Unexpected character '{}' at offset {} (state {:?})", self.ch, self.offset, self.state)
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        write!(
+            f,
+            "Unexpected character '{}' at offset {} (state {:?})",
+            self.ch, self.offset, self.state
+        )
     }
 }
