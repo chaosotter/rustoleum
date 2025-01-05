@@ -1,5 +1,6 @@
 use std::fs;
 
+mod game;
 mod tokenizer;
 
 fn main() {
@@ -13,8 +14,8 @@ fn main() {
         Err(err) => panic!("{}", err.to_string()),
     };
 
-    while !stream.done() {
-        let token = stream.next_token();
-        println!("{:?}", token);
-    }
+    match game::Game::new(&mut stream) {
+        Ok(game) => println!("{:?}", game),
+        Err(err) => panic!("{}", err.to_string()),
+    };
 }
