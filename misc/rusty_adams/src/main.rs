@@ -8,5 +8,5 @@ fn main() {
         Err(err) => panic!("{}", err.to_string()),
     };
 
-    println!("{:?}", game);
+    game.print_debug();
 }

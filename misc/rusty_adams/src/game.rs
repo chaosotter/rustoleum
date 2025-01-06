@@ -17,14 +17,22 @@ const ETERNAL_LIGHT: i32 = -1;
 /// Defines the game itself.
 #[derive(Debug)]
 pub struct Game {
-    /// The header of the game file.
-    header: Header,
+    pub header: Header,
+    pub actions: Vec<Action>,
 }
 
 impl Game {
     /// Parses a new game from the given stream of tokens.
     pub fn new(stream: &mut tokenizer::Stream) -> Result<Game, parser::ParseError> {
         parser::parse_game(stream)
+    }
+
+    /// Prints a version of the game to stdout for debugging.
+    pub fn print_debug(&self) {
+        println!("{:?}", self.header);
+        for action in &self.actions {
+            println!("{:?}", action);
+        }
     }
 }
 
@@ -55,4 +63,38 @@ struct Header {
     num_messages: i32,
     /// 0-based index of treasure room for scoring.
     treasure_room: i32,
+}
+
+/// Defines a single action.
+#[derive(Debug)]
+struct Action {
+    /// The verb index.
+    verb_index: i32,
+    /// The noun index.
+    noun_index: i32,
+    /// The conditions (five in all).
+    conditions: [Condition; 5],
+    /// The actions (four in all).
+    actions: [ActionType; 4],
+}
+
+/// Defines a single condition.
+#[derive(Debug, Default)]
+struct Condition {
+    /// The condition type.
+    cond_type: ConditionType,
+    /// The condition value.
+    value: i32,
+}
+
+/// Defines a condition type.
+/// TODO: Redesign Condition and ConditionType to be a single enum.
+type ConditionType = i32;
+
+/// Defines an action type.
+#[derive(Debug, Default)]
+enum ActionType {
+    #[default]
+    Unknown,
+    Generic(i32),
 }
