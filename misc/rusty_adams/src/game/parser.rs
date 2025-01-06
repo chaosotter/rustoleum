@@ -23,8 +23,8 @@ pub fn parse_game(stream: &mut tokenizer::Stream) -> Result<super::Game, ParseEr
     };
 
     Ok(super::Game {
-        header: header,
-        actions: actions,
+        header,
+        actions,
         verbs: words.0,
         nouns: words.1,
     })
@@ -36,8 +36,8 @@ fn parse_header(stream: &mut tokenizer::Stream) -> Result<super::Header, ParseEr
         unknown0: _read_int(stream)?,
         num_items: _read_int(stream)? + 1, // adjust for option base 0
         num_actions: _read_int(stream)? + 1, // adjust for option base 0
-        num_words: _read_int(stream)? + 1,     // adjust for option base 0
-        num_rooms: _read_int(stream)? + 1,     // adjust for option base 0
+        num_words: _read_int(stream)? + 1, // adjust for option base 0
+        num_rooms: _read_int(stream)? + 1, // adjust for option base 0
         max_inventory: _read_int(stream)?,
         starting_room: _read_int(stream)?,
         num_treasures: _read_int(stream)?,
@@ -49,7 +49,10 @@ fn parse_header(stream: &mut tokenizer::Stream) -> Result<super::Header, ParseEr
 }
 
 /// Parses all of the actions from the game file.
-fn parse_actions(stream: &mut tokenizer::Stream, num_actions: i32) -> Result<Vec<super::Action>, ParseError> {
+fn parse_actions(
+    stream: &mut tokenizer::Stream,
+    num_actions: i32,
+) -> Result<Vec<super::Action>, ParseError> {
     let mut actions = Vec::new();
     for _ in 0..num_actions {
         let action = parse_action(stream)?;
@@ -69,19 +72,17 @@ fn parse_action(stream: &mut tokenizer::Stream) -> Result<super::Action, ParseEr
     let noun_index = num % 150;
 
     let mut conditions = [(); 5].map(|_| super::Condition::default());
-    for i in 0..5 {
+    for cond in &mut conditions {
         let num = _read_int(stream)?;
-        conditions[i] = super::Condition {
-            cond_type: (num % 20) as super::ConditionType,
-            value: num / 20,
-        };
+        cond.cond_type = (num % 20) as super::ConditionType;
+        cond.value = num / 20;
     }
 
     let mut actions = [(); 4].map(|_| super::ActionType::default());
     for i in 0..2 {
         let num = _read_int(stream)?;
-        actions[i*2] = super::ActionType::Generic(num / 150);
-        actions[i*2 + 1] = super::ActionType::Generic(num % 150);
+        actions[i * 2] = super::ActionType::Generic(num / 150);
+        actions[i * 2 + 1] = super::ActionType::Generic(num % 150);
     }
 
     Ok(super::Action {
@@ -94,7 +95,10 @@ fn parse_action(stream: &mut tokenizer::Stream) -> Result<super::Action, ParseEr
 
 /// Parses all of the words from the game file, which are an interleaved array
 /// of strings.  An initial "*" indicates a synonym.
-fn parse_words(stream: &mut tokenizer::Stream, num_words: i32) -> Result<(Vec<super::Word>, Vec<super::Word>), ParseError> {
+fn parse_words(
+    stream: &mut tokenizer::Stream,
+    num_words: i32,
+) -> Result<(Vec<super::Word>, Vec<super::Word>), ParseError> {
     let mut verbs = Vec::new();
     let mut nouns = Vec::new();
 
@@ -128,7 +132,7 @@ fn _read_word(stream: &mut tokenizer::Stream) -> Result<super::Word, ParseError>
         is_synonym = true;
         word = word.strip_prefix("*").unwrap().to_string();
     }
-    Ok(super::Word{word, is_synonym})
+    Ok(super::Word { word, is_synonym })
 }
 
 /// Represents an error encountered during parsing.

@@ -1,6 +1,6 @@
 //! This module contains all of the code used to write a GAme structure in the
 //! same format as it was orginally read.
-//! 
+//!
 //! We use this primarily to test the correctness of our parsing, but it would
 //! be reasonable to evolve this toward support for interactive game
 //! modification.
@@ -31,11 +31,11 @@ fn write_header<W: Write>(writer: &mut W, header: &super::Header) -> std::io::Re
     writeln!(writer, " {} ", header.light_duration)?;
     writeln!(writer, " {} ", header.num_messages - 1)?;
     writeln!(writer, " {} ", header.treasure_room)?;
-    Ok(())    
+    Ok(())
 }
 
 /// Writes the actions of a Game to the given Writer.
-fn write_actions<W: Write>(writer: &mut W, actions: &Vec<super::Action>) -> std::io::Result<()> {
+fn write_actions<W: Write>(writer: &mut W, actions: &[super::Action]) -> std::io::Result<()> {
     for action in actions.iter() {
         write_action(writer, action)?;
     }
@@ -59,7 +59,11 @@ fn write_action<W: Write>(writer: &mut W, action: &super::Action) -> std::io::Re
 }
 
 /// Writes the words of a Game to the given Writer.
-fn write_words<W: Write>(writer: &mut W, verbs: &Vec<super::Word>, nouns: &Vec<super::Word>) -> std::io::Result<()> {
+fn write_words<W: Write>(
+    writer: &mut W,
+    verbs: &[super::Word],
+    nouns: &[super::Word],
+) -> std::io::Result<()> {
     assert!(verbs.len() == nouns.len());
     for i in 0..verbs.len() {
         write_word(writer, verbs.get(i).unwrap())?;
