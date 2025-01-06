@@ -7,10 +7,12 @@
 
 use std::io::Write;
 
+use super::*;
+
 /// Writes a Game to the given Writer.
 ///
 /// This is the inverse of the `parse_game` function.
-pub fn write_game<W: Write>(writer: &mut W, game: &super::Game) -> std::io::Result<()> {
+pub fn write_game<W: Write>(writer: &mut W, game: &Game) -> std::io::Result<()> {
     write_header(writer, &game.header)?;
     write_actions(writer, &game.actions)?;
     write_words(writer, &game.verbs, &game.nouns)?;
@@ -18,7 +20,7 @@ pub fn write_game<W: Write>(writer: &mut W, game: &super::Game) -> std::io::Resu
 }
 
 /// Writes the header of a Game to the given Writer.
-fn write_header<W: Write>(writer: &mut W, header: &super::Header) -> std::io::Result<()> {
+fn write_header<W: Write>(writer: &mut W, header: &Header) -> std::io::Result<()> {
     writeln!(writer, " {} ", header.unknown0)?;
     writeln!(writer, " {} ", header.num_items - 1)?;
     writeln!(writer, " {} ", header.num_actions - 1)?;
@@ -35,7 +37,7 @@ fn write_header<W: Write>(writer: &mut W, header: &super::Header) -> std::io::Re
 }
 
 /// Writes the actions of a Game to the given Writer.
-fn write_actions<W: Write>(writer: &mut W, actions: &[super::Action]) -> std::io::Result<()> {
+fn write_actions<W: Write>(writer: &mut W, actions: &[Action]) -> std::io::Result<()> {
     for action in actions.iter() {
         write_action(writer, action)?;
     }
@@ -43,7 +45,7 @@ fn write_actions<W: Write>(writer: &mut W, actions: &[super::Action]) -> std::io
 }
 
 /// Writes a single action from a Game to the given Writer.
-fn write_action<W: Write>(writer: &mut W, action: &super::Action) -> std::io::Result<()> {
+fn write_action<W: Write>(writer: &mut W, action: &Action) -> std::io::Result<()> {
     writeln!(writer, " {} ", action.verb_index * 150 + action.noun_index)?;
     for cond in action.conditions.iter() {
         writeln!(writer, " {} ", cond.cond_type + 20 * cond.value)?;
@@ -59,11 +61,7 @@ fn write_action<W: Write>(writer: &mut W, action: &super::Action) -> std::io::Re
 }
 
 /// Writes the words of a Game to the given Writer.
-fn write_words<W: Write>(
-    writer: &mut W,
-    verbs: &[super::Word],
-    nouns: &[super::Word],
-) -> std::io::Result<()> {
+fn write_words<W: Write>(writer: &mut W, verbs: &[Word], nouns: &[Word]) -> std::io::Result<()> {
     assert!(verbs.len() == nouns.len());
     for i in 0..verbs.len() {
         write_word(writer, verbs.get(i).unwrap())?;
@@ -73,7 +71,7 @@ fn write_words<W: Write>(
 }
 
 /// Writes a single word from a Game to the given Writer.
-fn write_word<W: Write>(writer: &mut W, word: &super::Word) -> std::io::Result<()> {
+fn write_word<W: Write>(writer: &mut W, word: &Word) -> std::io::Result<()> {
     if word.is_synonym {
         writeln!(writer, r#""*{}""#, word.word)
     } else {
