@@ -81,7 +81,7 @@ fn parse_action(stream: &mut tokenizer::Stream) -> Result<super::Action, ParseEr
         verb_index,
         noun_index,
         conditions,
-        actions: actions,
+        actions,
     })
 }
 
