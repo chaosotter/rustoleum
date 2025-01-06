@@ -17,9 +17,16 @@ pub fn parse_game(stream: &mut tokenizer::Stream) -> Result<super::Game, ParseEr
         Err(e) => return Err(e),
     };
 
+    let words = match parse_words(stream, header.num_words) {
+        Ok(words) => words,
+        Err(e) => return Err(e),
+    };
+
     Ok(super::Game {
         header: header,
         actions: actions,
+        verbs: words.0,
+        nouns: words.1,
     })
 }
 
@@ -29,14 +36,14 @@ fn parse_header(stream: &mut tokenizer::Stream) -> Result<super::Header, ParseEr
         unknown0: _read_int(stream)?,
         num_items: _read_int(stream)? + 1, // adjust for option base 0
         num_actions: _read_int(stream)? + 1, // adjust for option base 0
-        num_words: _read_int(stream)?,     // adjust for option base 0
-        num_rooms: _read_int(stream)?,     // adjust for option base 0
+        num_words: _read_int(stream)? + 1,     // adjust for option base 0
+        num_rooms: _read_int(stream)? + 1,     // adjust for option base 0
         max_inventory: _read_int(stream)?,
         starting_room: _read_int(stream)?,
         num_treasures: _read_int(stream)?,
         word_length: _read_int(stream)?,
         light_duration: _read_int(stream)?,
-        num_messages: _read_int(stream)?, // adjust for option base 0
+        num_messages: _read_int(stream)? + 1, // adjust for option base 0
         treasure_room: _read_int(stream)?,
     })
 }
@@ -85,11 +92,43 @@ fn parse_action(stream: &mut tokenizer::Stream) -> Result<super::Action, ParseEr
     })
 }
 
+/// Parses all of the words from the game file, which are an interleaved array
+/// of strings.  An initial "*" indicates a synonym.
+fn parse_words(stream: &mut tokenizer::Stream, num_words: i32) -> Result<(Vec<super::Word>, Vec<super::Word>), ParseError> {
+    let mut verbs = Vec::new();
+    let mut nouns = Vec::new();
+
+    for _ in 0..num_words {
+        let verb = _read_word(stream)?;
+        verbs.push(verb);
+        let noun = _read_word(stream)?;
+        nouns.push(noun);
+    }
+    Ok((verbs, nouns))
+}
+
 fn _read_int(stream: &mut tokenizer::Stream) -> Result<i32, ParseError> {
     match stream.next_int() {
         Ok(value) => Ok(value),
         Err(e) => Err(ParseError { msg: e }),
     }
+}
+
+fn _read_str(stream: &mut tokenizer::Stream) -> Result<String, ParseError> {
+    match stream.next_str() {
+        Ok(value) => Ok(value),
+        Err(e) => Err(ParseError { msg: e }),
+    }
+}
+
+fn _read_word(stream: &mut tokenizer::Stream) -> Result<super::Word, ParseError> {
+    let mut word = _read_str(stream)?;
+    let mut is_synonym = false;
+    if word.starts_with("*") {
+        is_synonym = true;
+        word = word.strip_prefix("*").unwrap().to_string();
+    }
+    Ok(super::Word{word, is_synonym})
 }
 
 /// Represents an error encountered during parsing.

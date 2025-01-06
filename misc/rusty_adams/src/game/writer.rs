@@ -7,14 +7,13 @@
 
 use std::io::Write;
 
-use crate::game::Game;
-
 /// Writes a Game to the given Writer.
 ///
 /// This is the inverse of the `parse_game` function.
 pub fn write_game<W: Write>(writer: &mut W, game: &super::Game) -> std::io::Result<()> {
     write_header(writer, &game.header)?;
     write_actions(writer, &game.actions)?;
+    write_words(writer, &game.verbs, &game.nouns)?;
     Ok(())
 }
 
@@ -57,4 +56,23 @@ fn write_action<W: Write>(writer: &mut W, action: &super::Action) -> std::io::Re
         }
     }
     Ok(())
+}
+
+/// Writes the words of a Game to the given Writer.
+fn write_words<W: Write>(writer: &mut W, verbs: &Vec<super::Word>, nouns: &Vec<super::Word>) -> std::io::Result<()> {
+    assert!(verbs.len() == nouns.len());
+    for i in 0..verbs.len() {
+        write_word(writer, verbs.get(i).unwrap())?;
+        write_word(writer, nouns.get(i).unwrap())?;
+    }
+    Ok(())
+}
+
+/// Writes a single word from a Game to the given Writer.
+fn write_word<W: Write>(writer: &mut W, word: &super::Word) -> std::io::Result<()> {
+    if word.is_synonym {
+        writeln!(writer, r#""*{}""#, word.word)
+    } else {
+        writeln!(writer, r#""{}""#, word.word)
+    }
 }

@@ -19,6 +19,8 @@ const ETERNAL_LIGHT: i32 = -1;
 pub struct Game {
     pub header: Header,
     pub actions: Vec<Action>,
+    pub verbs: Vec<Word>,
+    pub nouns: Vec<Word>,
 }
 
 impl Game {
@@ -30,8 +32,14 @@ impl Game {
     /// Prints a version of the game to stdout for debugging.
     pub fn print_debug(&self) {
         println!("{:?}", self.header);
-        for action in &self.actions {
-            println!("{:?}", action);
+        for (i, action) in self.actions.iter().enumerate() {
+            println!("Action {}: {:?}", i, action);
+        }
+        for (i, verb) in self.verbs.iter().enumerate() {
+            println!("Verb {}: {:?}", i, verb);
+        }
+        for (i, noun) in self.nouns.iter().enumerate() {
+            println!("Noun {}: {:?}", i, noun);
         }
     }
 }
@@ -97,4 +105,13 @@ enum ActionType {
     #[default]
     Unknown,
     Generic(i32),
+}
+
+/// Defines a word (either a verb or a noun).
+#[derive(Debug, Default)]
+struct Word {
+    /// The word text (truncated to the word length)
+    word: String,
+    /// Indicates this word is a synonym of the previous word.
+    is_synonym: bool,
 }
