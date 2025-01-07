@@ -78,7 +78,12 @@ fn parse_action(stream: &mut Stream) -> Result<Action, ParseError> {
         actions[i * 2 + 1] = super::ActionType::Generic(num % 150);
     }
 
-    Ok(Action { verb_index, noun_index, conditions, actions })
+    Ok(Action {
+        verb_index,
+        noun_index,
+        conditions,
+        actions,
+    })
 }
 
 /// Parses all of the words from the game file, which are an interleaved array
@@ -88,9 +93,15 @@ fn parse_words(stream: &mut Stream, num_words: i32) -> Result<(Vec<Word>, Vec<Wo
     let mut nouns = Vec::new();
     for _ in 0..num_words {
         let verb = _read_word(stream)?;
-        verbs.push(Word { word: verb.0, is_synonym: verb.1 });
+        verbs.push(Word {
+            word: verb.0,
+            is_synonym: verb.1,
+        });
         let noun = _read_word(stream)?;
-        nouns.push(Word { word: noun.0, is_synonym: noun.1 });
+        nouns.push(Word {
+            word: noun.0,
+            is_synonym: noun.1,
+        });
     }
     Ok((verbs, nouns))
 }
@@ -109,8 +120,8 @@ fn parse_rooms(stream: &mut Stream, num_rooms: i32) -> Result<Vec<Room>, ParseEr
 /// to indicate that it stands alone, with no "I'm in a" prefix.
 fn parse_room(stream: &mut Stream) -> Result<Room, ParseError> {
     let mut exits = [(); 6].map(|_| 0);
-    for i in 0..6 {
-        exits[i] = _read_int(stream)?;
+    for exit in &mut exits {
+        *exit = _read_int(stream)?;
     }
 
     let desc = _read_word(stream)?;
@@ -141,10 +152,10 @@ fn parse_items(stream: &mut Stream, num_items: i32) -> Result<Vec<Item>, ParseEr
 
 /// Parses a single item, which consists of a string description and a room
 /// number indicating the initial location.
-/// 
+///
 /// Treasures are indicated with a leading "*", but unlike words and room
 /// descriptions, we do not strip that prefix from the description.
-/// 
+///
 /// If the description has a suffix of `/XXX/``, then automatic GET and DROP
 /// operations can be performed using "XXX" as a noun.
 fn parse_item(stream: &mut Stream) -> Result<Item, ParseError> {
@@ -160,7 +171,12 @@ fn parse_item(stream: &mut Stream) -> Result<Item, ParseError> {
     } else {
         None
     };
-    Ok(Item { description, location, is_treasure, autograb })
+    Ok(Item {
+        description,
+        location,
+        is_treasure,
+        autograb,
+    })
 }
 
 /// Reads in the next integer token.
