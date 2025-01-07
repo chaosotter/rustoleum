@@ -1,6 +1,7 @@
 //! This module contains all of the code used to initialize a Game structure
 //! from a collection of tokens.
 
+use regex::Regex;
 use std::fmt::{Display, Error, Formatter};
 
 use super::*;
@@ -23,8 +24,18 @@ pub fn parse_game(stream: &mut Stream) -> Result<Game, ParseError> {
         Err(e) => return Err(e),
     };
 
-    let rooms: Vec<Room> = match parse_rooms(stream, header.num_rooms) {
+    let rooms = match parse_rooms(stream, header.num_rooms) {
         Ok(rooms) => rooms,
+        Err(e) => return Err(e),
+    };
+
+    let messages = match parse_messages(stream, header.num_messages) {
+        Ok(messages) => messages,
+        Err(e) => return Err(e),
+    };
+
+    let items: Vec<Item> = match parse_items(stream, header.num_items) {
+        Ok(items) => items,
         Err(e) => return Err(e),
     };
 
@@ -34,6 +45,8 @@ pub fn parse_game(stream: &mut Stream) -> Result<Game, ParseError> {
         verbs: words.0,
         nouns: words.1,
         rooms,
+        messages,
+        items,
     })
 }
 
@@ -136,6 +149,50 @@ fn parse_room(stream: &mut Stream) -> Result<Room, ParseError> {
         description: desc.0,
         is_literal: desc.1,
     })
+}
+
+// Parses all of the messages from the game file.
+fn parse_messages(stream: &mut Stream, num_messages: i32) -> Result<Vec<String>, ParseError> {
+    let mut messages = Vec::new();
+    for _ in 0..num_messages {
+        let message = _read_str(stream)?;
+        messages.push(message);
+    }
+    Ok(messages)
+}
+
+// Parses all of the items from the game file.
+fn parse_items(stream: &mut Stream, num_items: i32) -> Result<Vec<Item>, ParseError> {
+    let mut items = Vec::new();
+    for _ in 0..num_items {
+        let item = parse_item(stream)?;
+        items.push(item);
+    }
+    Ok(items)
+}
+
+/// Parses a single item, which consists of a string description and a room
+/// number indicating the initial location.
+/// 
+/// Treasures are indicated with a leading "*", but unlike words and room
+/// descriptions, we do not strip that prefix from the description.
+/// 
+/// If the description has a suffix of `/XXX/``, then automatic GET and DROP
+/// operations can be performed using "XXX" as a noun.
+fn parse_item(stream: &mut Stream) -> Result<Item, ParseError> {
+    let mut description = _read_str(stream)?;
+    let location = _read_int(stream)?;
+
+    let is_treasure = description.starts_with("*");
+
+    let re = Regex::new(r"^(?<description>.*)/(?<autograb>.*)/$").unwrap();
+    let autograb = if let Some(caps) = re.captures(&description.clone()) {
+        description = caps["description"].to_string();
+        Some(caps["autograb"].to_string())
+    } else {
+        None
+    };
+    Ok(Item { description, location, is_treasure, autograb })
 }
 
 /// Reads in the next integer token.

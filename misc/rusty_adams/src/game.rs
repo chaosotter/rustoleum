@@ -10,18 +10,24 @@ pub mod writer;
 
 use crate::tokenizer;
 
-/// Used in the `light_duration` field of the game header to indicate that the
-/// light source never expires.
+/// Used in the `light_duration` field of the `Header` struct` to indicate that
+/// the light source never expires.
 const ETERNAL_LIGHT: i32 = -1;
+
+/// Used in the `location` field of the `Item` struct to indicate that the item
+/// is in the player's inventory.
+const INVENTORY: i32 = -1;
 
 /// Defines the game itself.
 #[derive(Debug)]
 pub struct Game {
-    pub header: Header,
-    pub actions: Vec<Action>,
-    pub verbs: Vec<Word>,
-    pub nouns: Vec<Word>,
-    pub rooms: Vec<Room>,
+    header: Header,
+    actions: Vec<Action>,
+    verbs: Vec<Word>,
+    nouns: Vec<Word>,
+    rooms: Vec<Room>,
+    messages: Vec<String>,
+    items: Vec<Item>,
 }
 
 impl Game {
@@ -44,6 +50,12 @@ impl Game {
         }
         for (i, room) in self.rooms.iter().enumerate() {
             println!("Room {}: {:?}", i, room);
+        }
+        for (i, message) in self.messages.iter().enumerate() {
+            println!("Message {}: {:?}", i, message);
+        }
+        for (i, item) in self.items.iter().enumerate() {
+            println!("Item {}: {:?}", i, item);
         }
     }
 }
@@ -129,4 +141,17 @@ struct Room {
     is_literal: bool,
     /// The room exits.
     exits: [i32; 6],
+}
+
+/// Defines an item (object).
+#[derive(Debug)]
+struct Item {
+    /// The item description.
+    description: String,
+    /// The item location (possibly `INVENTORY`).
+    location: i32,
+    /// Is the item a treasure (denoted by asterisks in the description)?
+    is_treasure: bool,
+    /// If set, automatic get/drop works, using this name.
+    autograb: Option<String>,
 }

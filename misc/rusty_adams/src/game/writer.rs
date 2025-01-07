@@ -17,6 +17,8 @@ pub fn write_game<W: Write>(writer: &mut W, game: &Game) -> std::io::Result<()> 
     write_actions(writer, &game.actions)?;
     write_words(writer, &game.verbs, &game.nouns)?;
     write_rooms(writer, &game.rooms)?;
+    write_messages(writer, &game.messages)?;
+    write_items(writer, &game.items)?;
     Ok(())
 }
 
@@ -98,4 +100,30 @@ fn write_room<W: Write>(writer: &mut W, room: &Room) -> std::io::Result<()> {
     } else {
         writeln!(writer, r#""{}""#, room.description)
     }
+}
+
+/// Writes the messages of a Game to the given Writer.
+fn write_messages<W: Write>(writer: &mut W, messages: &[String]) -> std::io::Result<()> {
+    for message in messages.iter() {
+        writeln!(writer, r#""{}""#, message)?
+    }
+    Ok(())
+}
+
+/// Writes the items of a Game to the given Writer.
+fn write_items<W: Write>(writer: &mut W, items: &[Item]) -> std::io::Result<()> {
+    for item in items.iter() {
+        write_item(writer, item)?;
+    }
+    Ok(())
+}
+
+/// Writes a single item from a Game to the given Writer.
+fn write_item<W: Write>(writer: &mut W, item: &Item) -> std::io::Result<()> {
+    let description = if let Some(autograb) = &item.autograb {
+        format!("{}/{}/", item.description, autograb)
+    } else {
+        item.description.clone()
+    };
+    writeln!(writer, r#""{}" {} "#, description, item.location)
 }
