@@ -16,6 +16,7 @@ pub fn parse_game(stream: &mut Stream) -> Result<Game, ParseError> {
     let messages = parse_messages(stream, header.num_messages)?;
     let items: Vec<Item> = parse_items(stream, header.num_items)?;
     parse_comments(stream, &mut actions)?;
+    let footer = parse_footer(stream)?;
 
     Ok(Game {
         header,
@@ -25,6 +26,7 @@ pub fn parse_game(stream: &mut Stream) -> Result<Game, ParseError> {
         rooms,
         messages,
         items,
+        footer,
     })
 }
 
@@ -191,6 +193,15 @@ fn parse_comments(stream: &mut Stream, actions: &mut Vec<Action>) -> Result<(), 
         }
     }
     Ok(())
+}
+
+/// Parses the footer.
+fn parse_footer(stream: &mut Stream) -> Result<Footer, ParseError> {
+    Ok(Footer {
+        version: _read_int(stream)?,
+        adventure: _read_int(stream)?,
+        magic: _read_int(stream)?,
+    })
 }
 
 /// Reads in the next integer token.

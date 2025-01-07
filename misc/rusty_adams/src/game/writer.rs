@@ -20,6 +20,7 @@ pub fn write_game<W: Write>(writer: &mut W, game: &Game) -> std::io::Result<()> 
     write_messages(writer, &game.messages)?;
     write_items(writer, &game.items)?;
     write_comments(writer, &game.actions)?;
+    write_footer(writer, &game.footer)?;
     Ok(())
 }
 
@@ -137,5 +138,13 @@ fn write_comments<W: Write>(writer: &mut W, actions: &[Action]) -> std::io::Resu
             None => writeln!(writer, r#""""#)?,
         }
     }
+    Ok(())
+}
+
+/// Writes the footer.
+fn write_footer<W: Write>(writer: &mut W, footer: &Footer) -> std::io::Result<()> {
+    writeln!(writer, " {} ", footer.version)?;
+    writeln!(writer, " {} ", footer.adventure)?;
+    writeln!(writer, " {} ", footer.magic)?;
     Ok(())
 }

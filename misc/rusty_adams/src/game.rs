@@ -28,6 +28,7 @@ pub struct Game {
     rooms: Vec<Room>,
     messages: Vec<String>,
     items: Vec<Item>,
+    footer: Footer,
 }
 
 impl Game {
@@ -57,10 +58,11 @@ impl Game {
         for (i, item) in self.items.iter().enumerate() {
             println!("Item {}: {:?}", i, item);
         }
+        println!("{:?}", self.footer);
     }
 }
 
-/// Defines the header of a game file.
+/// Defines the header.
 #[derive(Debug)]
 struct Header {
     /// Unknown purpose.
@@ -156,4 +158,15 @@ struct Item {
     is_treasure: bool,
     /// If set, automatic get/drop works, using this name.
     autograb: Option<String>,
+}
+
+/// Defines the footer.
+#[derive(Debug)]
+struct Footer {
+    /// The version number.
+    version: i32,
+    /// The adventure number.
+    adventure: i32,
+    /// Magic number (purpose unknown).
+    magic: i32,
 }
