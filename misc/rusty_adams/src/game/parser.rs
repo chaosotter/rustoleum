@@ -23,11 +23,17 @@ pub fn parse_game(stream: &mut Stream) -> Result<Game, ParseError> {
         Err(e) => return Err(e),
     };
 
+    let rooms: Vec<Room> = match parse_rooms(stream, header.num_rooms) {
+        Ok(rooms) => rooms,
+        Err(e) => return Err(e),
+    };
+
     Ok(Game {
         header,
         actions,
         verbs: words.0,
         nouns: words.1,
+        rooms,
     })
 }
 
@@ -96,16 +102,43 @@ fn parse_action(stream: &mut Stream) -> Result<Action, ParseError> {
 fn parse_words(stream: &mut Stream, num_words: i32) -> Result<(Vec<Word>, Vec<Word>), ParseError> {
     let mut verbs = Vec::new();
     let mut nouns = Vec::new();
-
     for _ in 0..num_words {
         let verb = _read_word(stream)?;
-        verbs.push(verb);
+        verbs.push(Word { word: verb.0, is_synonym: verb.1 });
         let noun = _read_word(stream)?;
-        nouns.push(noun);
+        nouns.push(Word { word: noun.0, is_synonym: noun.1 });
     }
     Ok((verbs, nouns))
 }
 
+/// Parses all of the rooms from the game file.
+fn parse_rooms(stream: &mut Stream, num_rooms: i32) -> Result<Vec<Room>, ParseError> {
+    let mut rooms = Vec::new();
+    for _ in 0..num_rooms {
+        let room = parse_room(stream)?;
+        rooms.push(room);
+    }
+    Ok(rooms)
+}
+
+/// Parses a single room, which consists of six directions (north, south, east,
+/// west, up, down) followed by a description. The description starts with "*"
+/// to indicate that it stands alone, with no "I'm in a" prefix.
+fn parse_room(stream: &mut Stream) -> Result<Room, ParseError> {
+    let mut exits = [(); 6].map(|_| 0);
+    for i in 0..6 {
+        exits[i] = _read_int(stream)?;
+    }
+
+    let desc = _read_word(stream)?;
+    Ok(Room {
+        exits,
+        description: desc.0,
+        is_literal: desc.1,
+    })
+}
+
+/// Reads in the next integer token.
 fn _read_int(stream: &mut Stream) -> Result<i32, ParseError> {
     match stream.next_int() {
         Ok(value) => Ok(value),
@@ -113,6 +146,7 @@ fn _read_int(stream: &mut Stream) -> Result<i32, ParseError> {
     }
 }
 
+/// Reads in the next string token.
 fn _read_str(stream: &mut Stream) -> Result<String, ParseError> {
     match stream.next_str() {
         Ok(value) => Ok(value),
@@ -120,14 +154,15 @@ fn _read_str(stream: &mut Stream) -> Result<String, ParseError> {
     }
 }
 
-fn _read_word(stream: &mut Stream) -> Result<Word, ParseError> {
+/// Reads in the next word.  A word is distinguished from a string token by
+/// having an optional "*" prefix to indicate special handling.
+fn _read_word(stream: &mut Stream) -> Result<(String, bool), ParseError> {
     let mut word = _read_str(stream)?;
-    let mut is_synonym = false;
-    if word.starts_with("*") {
-        is_synonym = true;
+    let has_prefix = word.starts_with("*");
+    if has_prefix {
         word = word.strip_prefix("*").unwrap().to_string();
     }
-    Ok(Word { word, is_synonym })
+    Ok((word, has_prefix))
 }
 
 /// Represents an error encountered during parsing.

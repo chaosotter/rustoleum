@@ -16,6 +16,7 @@ pub fn write_game<W: Write>(writer: &mut W, game: &Game) -> std::io::Result<()> 
     write_header(writer, &game.header)?;
     write_actions(writer, &game.actions)?;
     write_words(writer, &game.verbs, &game.nouns)?;
+    write_rooms(writer, &game.rooms)?;
     Ok(())
 }
 
@@ -76,5 +77,25 @@ fn write_word<W: Write>(writer: &mut W, word: &Word) -> std::io::Result<()> {
         writeln!(writer, r#""*{}""#, word.word)
     } else {
         writeln!(writer, r#""{}""#, word.word)
+    }
+}
+
+/// Writes the rooms of a Game to the given Writer.
+fn write_rooms<W: Write>(writer: &mut W, rooms: &[Room]) -> std::io::Result<()> {
+    for room in rooms.iter() {
+        write_room(writer, room)?;
+    }
+    Ok(())
+}
+
+/// Write a single room from a Game to the given Writer.
+fn write_room<W: Write>(writer: &mut W, room: &Room) -> std::io::Result<()> {
+    for exit in room.exits.iter() {
+        writeln!(writer, " {} ", exit)?;
+    }
+    if room.is_literal {
+        writeln!(writer, r#""*{}""#, room.description)
+    } else {
+        writeln!(writer, r#""{}""#, room.description)
     }
 }

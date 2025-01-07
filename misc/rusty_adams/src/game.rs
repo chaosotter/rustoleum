@@ -21,6 +21,7 @@ pub struct Game {
     pub actions: Vec<Action>,
     pub verbs: Vec<Word>,
     pub nouns: Vec<Word>,
+    pub rooms: Vec<Room>,
 }
 
 impl Game {
@@ -40,6 +41,9 @@ impl Game {
         }
         for (i, noun) in self.nouns.iter().enumerate() {
             println!("Noun {}: {:?}", i, noun);
+        }
+        for (i, room) in self.rooms.iter().enumerate() {
+            println!("Room {}: {:?}", i, room);
         }
     }
 }
@@ -114,4 +118,15 @@ struct Word {
     word: String,
     /// Indicates this word is a synonym of the previous word.
     is_synonym: bool,
+}
+
+/// Defines a room.
+#[derive(Debug)]
+struct Room {
+    /// The room description.
+    description: String,
+    /// Indicates the description is to be printed literally (no "I'm in a" prefix).
+    is_literal: bool,
+    /// The room exits.
+    exits: [i32; 6],
 }
