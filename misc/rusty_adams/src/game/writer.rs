@@ -22,7 +22,7 @@ pub fn write_game<W: Write>(writer: &mut W, game: &Game) -> std::io::Result<()> 
     Ok(())
 }
 
-/// Writes the header of a Game to the given Writer.
+/// Writes the header.
 fn write_header<W: Write>(writer: &mut W, header: &Header) -> std::io::Result<()> {
     writeln!(writer, " {} ", header.unknown0)?;
     writeln!(writer, " {} ", header.num_items - 1)?;
@@ -39,7 +39,7 @@ fn write_header<W: Write>(writer: &mut W, header: &Header) -> std::io::Result<()
     Ok(())
 }
 
-/// Writes the actions of a Game to the given Writer.
+/// Writes all actions.
 fn write_actions<W: Write>(writer: &mut W, actions: &[Action]) -> std::io::Result<()> {
     for action in actions.iter() {
         write_action(writer, action)?;
@@ -47,7 +47,7 @@ fn write_actions<W: Write>(writer: &mut W, actions: &[Action]) -> std::io::Resul
     Ok(())
 }
 
-/// Writes a single action from a Game to the given Writer.
+/// Writes a single action.
 fn write_action<W: Write>(writer: &mut W, action: &Action) -> std::io::Result<()> {
     writeln!(writer, " {} ", action.verb_index * 150 + action.noun_index)?;
     for cond in action.conditions.iter() {
@@ -63,7 +63,7 @@ fn write_action<W: Write>(writer: &mut W, action: &Action) -> std::io::Result<()
     Ok(())
 }
 
-/// Writes the words of a Game to the given Writer.
+/// Writes all words.
 fn write_words<W: Write>(writer: &mut W, verbs: &[Word], nouns: &[Word]) -> std::io::Result<()> {
     assert!(verbs.len() == nouns.len());
     for i in 0..verbs.len() {
@@ -73,7 +73,7 @@ fn write_words<W: Write>(writer: &mut W, verbs: &[Word], nouns: &[Word]) -> std:
     Ok(())
 }
 
-/// Writes a single word from a Game to the given Writer.
+/// Writes a single word.
 fn write_word<W: Write>(writer: &mut W, word: &Word) -> std::io::Result<()> {
     if word.is_synonym {
         writeln!(writer, r#""*{}""#, word.word)
@@ -82,7 +82,7 @@ fn write_word<W: Write>(writer: &mut W, word: &Word) -> std::io::Result<()> {
     }
 }
 
-/// Writes the rooms of a Game to the given Writer.
+/// Writes all rooms.
 fn write_rooms<W: Write>(writer: &mut W, rooms: &[Room]) -> std::io::Result<()> {
     for room in rooms.iter() {
         write_room(writer, room)?;
@@ -90,7 +90,7 @@ fn write_rooms<W: Write>(writer: &mut W, rooms: &[Room]) -> std::io::Result<()> 
     Ok(())
 }
 
-/// Write a single room from a Game to the given Writer.
+/// Writes a single room.
 fn write_room<W: Write>(writer: &mut W, room: &Room) -> std::io::Result<()> {
     for exit in room.exits.iter() {
         writeln!(writer, " {} ", exit)?;
@@ -102,7 +102,7 @@ fn write_room<W: Write>(writer: &mut W, room: &Room) -> std::io::Result<()> {
     }
 }
 
-/// Writes the messages of a Game to the given Writer.
+/// Writes all messages.
 fn write_messages<W: Write>(writer: &mut W, messages: &[String]) -> std::io::Result<()> {
     for message in messages.iter() {
         writeln!(writer, r#""{}""#, message)?
@@ -110,7 +110,7 @@ fn write_messages<W: Write>(writer: &mut W, messages: &[String]) -> std::io::Res
     Ok(())
 }
 
-/// Writes the items of a Game to the given Writer.
+/// Writes all items.
 fn write_items<W: Write>(writer: &mut W, items: &[Item]) -> std::io::Result<()> {
     for item in items.iter() {
         write_item(writer, item)?;
@@ -118,7 +118,7 @@ fn write_items<W: Write>(writer: &mut W, items: &[Item]) -> std::io::Result<()> 
     Ok(())
 }
 
-/// Writes a single item from a Game to the given Writer.
+/// Writes a single item.
 fn write_item<W: Write>(writer: &mut W, item: &Item) -> std::io::Result<()> {
     let description = if let Some(autograb) = &item.autograb {
         format!("{}/{}/", item.description, autograb)

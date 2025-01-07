@@ -9,35 +9,12 @@ use crate::tokenizer::Stream;
 
 /// Initializes a new Game structure from a stream of tokens.
 pub fn parse_game(stream: &mut Stream) -> Result<Game, ParseError> {
-    let header = match parse_header(stream) {
-        Ok(header) => header,
-        Err(e) => return Err(e),
-    };
-
-    let actions = match parse_actions(stream, header.num_actions) {
-        Ok(actions) => actions,
-        Err(e) => return Err(e),
-    };
-
-    let words = match parse_words(stream, header.num_words) {
-        Ok(words) => words,
-        Err(e) => return Err(e),
-    };
-
-    let rooms = match parse_rooms(stream, header.num_rooms) {
-        Ok(rooms) => rooms,
-        Err(e) => return Err(e),
-    };
-
-    let messages = match parse_messages(stream, header.num_messages) {
-        Ok(messages) => messages,
-        Err(e) => return Err(e),
-    };
-
-    let items: Vec<Item> = match parse_items(stream, header.num_items) {
-        Ok(items) => items,
-        Err(e) => return Err(e),
-    };
+    let header = parse_header(stream)?;
+    let actions = parse_actions(stream, header.num_actions)?;
+    let words = parse_words(stream, header.num_words)?;
+    let rooms = parse_rooms(stream, header.num_rooms)?;
+    let messages = parse_messages(stream, header.num_messages)?;
+    let items: Vec<Item> = parse_items(stream, header.num_items)?;
 
     Ok(Game {
         header,
@@ -72,8 +49,7 @@ fn parse_header(stream: &mut Stream) -> Result<Header, ParseError> {
 fn parse_actions(stream: &mut Stream, num_actions: i32) -> Result<Vec<Action>, ParseError> {
     let mut actions = Vec::new();
     for _ in 0..num_actions {
-        let action = parse_action(stream)?;
-        actions.push(action);
+        actions.push(parse_action(stream)?);
     }
     Ok(actions)
 }
@@ -102,12 +78,7 @@ fn parse_action(stream: &mut Stream) -> Result<Action, ParseError> {
         actions[i * 2 + 1] = super::ActionType::Generic(num % 150);
     }
 
-    Ok(Action {
-        verb_index,
-        noun_index,
-        conditions,
-        actions,
-    })
+    Ok(Action { verb_index, noun_index, conditions, actions })
 }
 
 /// Parses all of the words from the game file, which are an interleaved array
@@ -128,8 +99,7 @@ fn parse_words(stream: &mut Stream, num_words: i32) -> Result<(Vec<Word>, Vec<Wo
 fn parse_rooms(stream: &mut Stream, num_rooms: i32) -> Result<Vec<Room>, ParseError> {
     let mut rooms = Vec::new();
     for _ in 0..num_rooms {
-        let room = parse_room(stream)?;
-        rooms.push(room);
+        rooms.push(parse_room(stream)?);
     }
     Ok(rooms)
 }
@@ -155,8 +125,7 @@ fn parse_room(stream: &mut Stream) -> Result<Room, ParseError> {
 fn parse_messages(stream: &mut Stream, num_messages: i32) -> Result<Vec<String>, ParseError> {
     let mut messages = Vec::new();
     for _ in 0..num_messages {
-        let message = _read_str(stream)?;
-        messages.push(message);
+        messages.push(_read_str(stream)?);
     }
     Ok(messages)
 }
@@ -165,8 +134,7 @@ fn parse_messages(stream: &mut Stream, num_messages: i32) -> Result<Vec<String>,
 fn parse_items(stream: &mut Stream, num_items: i32) -> Result<Vec<Item>, ParseError> {
     let mut items = Vec::new();
     for _ in 0..num_items {
-        let item = parse_item(stream)?;
-        items.push(item);
+        items.push(parse_item(stream)?);
     }
     Ok(items)
 }
