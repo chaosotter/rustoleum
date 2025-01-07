@@ -19,6 +19,7 @@ pub fn write_game<W: Write>(writer: &mut W, game: &Game) -> std::io::Result<()> 
     write_rooms(writer, &game.rooms)?;
     write_messages(writer, &game.messages)?;
     write_items(writer, &game.items)?;
+    write_comments(writer, &game.actions)?;
     Ok(())
 }
 
@@ -126,4 +127,15 @@ fn write_item<W: Write>(writer: &mut W, item: &Item) -> std::io::Result<()> {
         item.description.clone()
     };
     writeln!(writer, r#""{}" {} "#, description, item.location)
+}
+
+/// Writes all comments.
+fn write_comments<W: Write>(writer: &mut W, actions: &[Action]) -> std::io::Result<()> {
+    for action in actions.iter() {
+        match &action.comment {
+            Some(comment) => writeln!(writer, r#""{}""#, comment)?,
+            None => writeln!(writer, r#""""#)?,
+        }
+    }
+    Ok(())
 }

@@ -10,11 +10,12 @@ use crate::tokenizer::Stream;
 /// Initializes a new Game structure from a stream of tokens.
 pub fn parse_game(stream: &mut Stream) -> Result<Game, ParseError> {
     let header = parse_header(stream)?;
-    let actions = parse_actions(stream, header.num_actions)?;
+    let mut actions = parse_actions(stream, header.num_actions)?;
     let words = parse_words(stream, header.num_words)?;
     let rooms = parse_rooms(stream, header.num_rooms)?;
     let messages = parse_messages(stream, header.num_messages)?;
     let items: Vec<Item> = parse_items(stream, header.num_items)?;
+    parse_comments(stream, &mut actions)?;
 
     Ok(Game {
         header,
@@ -83,6 +84,7 @@ fn parse_action(stream: &mut Stream) -> Result<Action, ParseError> {
         noun_index,
         conditions,
         actions,
+        comment: None, // comments are after items in the game file
     })
 }
 
@@ -177,6 +179,18 @@ fn parse_item(stream: &mut Stream) -> Result<Item, ParseError> {
         is_treasure,
         autograb,
     })
+}
+
+/// Parses all of the comments from the game file, which are stored in the
+/// actions.
+fn parse_comments(stream: &mut Stream, actions: &mut Vec<Action>) -> Result<(), ParseError> {
+    for action in actions {
+        let comment = _read_str(stream)?;
+        if !comment.is_empty() {
+            action.comment = Some(comment);
+        }
+    }
+    Ok(())
 }
 
 /// Reads in the next integer token.

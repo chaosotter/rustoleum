@@ -100,6 +100,8 @@ struct Action {
     conditions: [Condition; 5],
     /// The actions (four in all).
     actions: [ActionType; 4],
+    /// The comment (purely for documentation).
+    comment: Option<String>,
 }
 
 /// Defines a single condition.
