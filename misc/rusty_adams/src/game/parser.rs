@@ -77,8 +77,8 @@ fn parse_action(stream: &mut Stream) -> Result<Action, ParseError> {
     let mut actions = [(); 4].map(|_| ActionType::default());
     for i in 0..2 {
         let num = _read_int(stream)?;
-        actions[i * 2] = super::ActionType::Generic(num / 150);
-        actions[i * 2 + 1] = super::ActionType::Generic(num % 150);
+        actions[i * 2] = num / 150;
+        actions[i * 2 + 1] = num % 150;
     }
 
     Ok(Action {

@@ -106,6 +106,32 @@ struct Action {
     comment: Option<String>,
 }
 
+/// Identifies a condition type.  We represent this as an i32 in preference to
+/// representing conditions as an Enum because there's (AFAIK) no way to
+/// initialize an Enum by discriminant, as we would logically do in the parser.
+type ConditionType = i32;
+
+const CONDITION_PARAMETER: ConditionType = 0;
+const CONDITION_ITEM_CARRIED: ConditionType = 1;
+const CONDITION_ITEM_IN_ROOM: ConditionType = 2;
+const CONDITION_ITEM_PRESENT: ConditionType = 3;
+const CONDITION_PLAYER_IN_ROOM: ConditionType = 4;
+const CONDITION_ITEM_NOT_IN_ROOM: ConditionType = 5;
+const CONDITION_ITEM_NOT_CARRIED: ConditionType = 6;
+const CONDITION_PLAYER_NOT_IN_ROOM: ConditionType = 7;
+const CONDITION_BIT_SET: ConditionType = 8;
+const CONDITION_BIT_CLEAR: ConditionType = 9;
+const CONDITION_INVENTORY_NOT_EMPTY: ConditionType = 10;
+const CONDITION_INVENTORY_EMPTY: ConditionType = 11;
+const CONDITION_ITEM_NOT_PRESENT: ConditionType = 12;
+const CONDITION_ITEM_IN_GAME: ConditionType = 13;
+const CONDITION_ITEM_NOT_IN_GAME: ConditionType = 14;
+const CONDITION_COUNTER_LE: ConditionType = 15;
+const CONDITION_COUNTER_GE: ConditionType = 16;
+const CONDITION_ITEM_MOVED: ConditionType = 17;
+const CONDITION_ITEM_NOT_MOVED: ConditionType = 18;
+const CONDITION_COUNTER_EQ: ConditionType = 19;
+
 /// Defines a single condition.
 #[derive(Debug, Default)]
 struct Condition {
@@ -115,17 +141,12 @@ struct Condition {
     value: i32,
 }
 
-/// Defines a condition type.
-/// TODO: Redesign Condition and ConditionType to be a single enum.
-type ConditionType = i32;
+/// Identifies an action type.  We represent this as an i32 in preference to
+/// representing action types as an Enum because there's (AFAIK) no way to
+/// initialize an Enum by discriminant, as we would logically do in the parser.
+type ActionType = i32;
 
-/// Defines an action type.
-#[derive(Debug, Default)]
-enum ActionType {
-    #[default]
-    Unknown,
-    Generic(i32),
-}
+const ACTION_NOTHING: ActionType = 0;
 
 /// Defines a word (either a verb or a noun).
 #[derive(Debug, Default)]

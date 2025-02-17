@@ -56,11 +56,7 @@ fn write_action<W: Write>(writer: &mut W, action: &Action) -> std::io::Result<()
         writeln!(writer, " {} ", cond.cond_type + 20 * cond.value)?;
     }
     for i in 0..2 {
-        if let super::ActionType::Generic(a1) = action.actions[i * 2] {
-            if let super::ActionType::Generic(a2) = action.actions[i * 2 + 1] {
-                writeln!(writer, " {} ", a1 * 150 + a2)?;
-            }
-        }
+        writeln!(writer, " {} ", action.actions[i * 2] * 150 + action.actions[i * 2 + 1])?;
     }
     Ok(())
 }
