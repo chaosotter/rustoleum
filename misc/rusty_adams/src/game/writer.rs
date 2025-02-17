@@ -1,4 +1,4 @@
-//! This module contains all of the code used to write a GAme structure in the
+//! This module contains all of the code used to write a Game structure in the
 //! same format as it was orginally read.
 //!
 //! We use this primarily to test the correctness of our parsing, but it would

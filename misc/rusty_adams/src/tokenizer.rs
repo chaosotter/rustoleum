@@ -12,11 +12,18 @@
 use std::collections::VecDeque;
 use std::fmt::{Display, Error, Formatter};
 
+/// A Location identifies line number and column within the original game file.
+#[derive(Clone, Copy, Debug)]
+pub struct Location {
+    pub line: usize,
+    pub col: usize,
+}
+
 /// There are only two kinds of token, Int and Str.
 #[derive(Debug)]
 pub enum Token {
-    Int(i32),
-    Str(String),
+    Int(i32, Location),
+    Str(String, Location),
 }
 
 /// A Stream contains a fully parsed sequence of tokens and a current-position
@@ -45,23 +52,36 @@ impl Stream {
         let mut state = State::Init;
         let mut acc = String::new();
 
+        let mut current_loc = Location{line: 1, col: 1};
+        let mut token_loc = Location{line: 1, col: 1};
+
         for offset in 0..data.len() {
             let ch = *data.get(offset).unwrap() as char;
+            if ch == '\n' {
+                current_loc.line += 1;
+                current_loc.col = 1;
+            } else {
+                current_loc.col += 1;
+            }
+
             match state {
                 // Init state: Not currently reading any token.
                 State::Init => {
                     if ch.is_ascii_whitespace() {
                         // pass
                     } else if ch == '-' {
+                        token_loc = current_loc;
                         acc.push(ch);
                         state = State::Sign;
                     } else if ch.is_ascii_digit() {
+                        token_loc = current_loc;
                         acc.push(ch);
                         state = State::Num;
                     } else if ch == '"' {
+                        token_loc = current_loc;
                         state = State::Quote;
                     } else {
-                        return Err(TokenError { ch, offset, state });
+                        return Err(TokenError { loc: current_loc, msg: format!("Unexpected character '{}'", ch) });
                     }
                 }
 
@@ -71,7 +91,7 @@ impl Stream {
                         acc.push(ch);
                         state = State::Num;
                     } else {
-                        return Err(TokenError { ch, offset, state });
+                        return Err(TokenError { loc: current_loc, msg: format!("Unexpected character '{}' in integer", ch) });
                     }
                 }
 
@@ -79,15 +99,15 @@ impl Stream {
                 State::Num => {
                     if ch.is_ascii_whitespace() {
                         match acc.parse::<i32>() {
-                            Ok(val) => tokens.push_back(Token::Int(val)),
-                            Err(_) => return Err(TokenError { ch, offset, state }),
+                            Ok(val) => tokens.push_back(Token::Int(val, token_loc.clone())),
+                            Err(_) => return Err(TokenError { loc: current_loc, msg: "Malformed integer".to_string() }),
                         }
                         acc.clear();
                         state = State::Init;
                     } else if ch.is_ascii_digit() {
                         acc.push(ch);
                     } else {
-                        return Err(TokenError { ch, offset, state });
+                        return Err(TokenError { loc: current_loc, msg: format!("Unexpected character '{}' in integer", ch) });
                     }
                 }
 
@@ -96,7 +116,7 @@ impl Stream {
                     if ch == '\\' {
                         state = State::Escape;
                     } else if ch == '"' {
-                        tokens.push_back(Token::Str(acc.clone()));
+                        tokens.push_back(Token::Str(acc.clone(), token_loc.clone()));
                         acc.clear();
                         state = State::Init;
                     } else {
@@ -120,20 +140,22 @@ impl Stream {
     }
 
     /// Returns the next integer in the stream.
-    pub fn next_int(&mut self) -> Result<i32, String> {
+    pub fn next_int(&mut self) -> Result<i32, TokenError> {
+        println!("next_int");
         match self.tokens.pop_front() {
-            Some(Token::Int(val)) => Ok(val),
-            Some(Token::Str(_)) => Err("Expected an integer, found a string".to_string()),
-            None => Err("Unexpected end of stream".to_string()),
+            Some(Token::Int(val, _)) => Ok(val),
+            Some(Token::Str(_, loc)) => Err(TokenError{ loc, msg: "Expected an integer, found a string".to_string() }),
+            None => Err(TokenError{ loc: Location{line: 0, col: 0}, msg: "Unexpected end of stream".to_string() }),
         }
     }
 
     /// Returns the next string in the stream.
-    pub fn next_str(&mut self) -> Result<String, String> {
+    pub fn next_str(&mut self) -> Result<String, TokenError> {
+        println!("next_str");
         match self.tokens.pop_front() {
-            Some(Token::Str(val)) => Ok(val),
-            Some(Token::Int(_)) => Err("Expected a string, found an integer".to_string()),
-            None => Err("Unexpected end of stream".to_string()),
+            Some(Token::Str(val, _)) => Ok(val),
+            Some(Token::Int(_, loc)) => Err(TokenError{ loc, msg: "Expected a string, found an integer".to_string() }),
+            None => Err(TokenError{ loc: Location{line: 0, col: 0}, msg: "Unexpected end of stream".to_string() }),
         }
     }
 
@@ -145,18 +167,13 @@ impl Stream {
 
 /// Represents an error encountered during tokenization.
 pub struct TokenError {
-    ch: char,
-    offset: usize,
-    state: State,
+    loc: Location,
+    msg: String,
 }
 
 impl Display for TokenError {
     /// Makes a tokenization error human-readable.
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        write!(
-            f,
-            "Unexpected character '{}' at offset {} (state {:?})",
-            self.ch, self.offset, self.state
-        )
+        write!(f, "{}:{}: {}", self.loc.line, self.loc.col, self.msg)
     }
 }

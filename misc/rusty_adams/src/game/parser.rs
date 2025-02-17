@@ -208,7 +208,7 @@ fn parse_footer(stream: &mut Stream) -> Result<Footer, ParseError> {
 fn _read_int(stream: &mut Stream) -> Result<i32, ParseError> {
     match stream.next_int() {
         Ok(value) => Ok(value),
-        Err(e) => Err(ParseError { msg: e }),
+        Err(e) => Err(ParseError { msg: format!("{}", e) }),
     }
 }
 
@@ -216,7 +216,7 @@ fn _read_int(stream: &mut Stream) -> Result<i32, ParseError> {
 fn _read_str(stream: &mut Stream) -> Result<String, ParseError> {
     match stream.next_str() {
         Ok(value) => Ok(value),
-        Err(e) => Err(ParseError { msg: e }),
+        Err(e) => Err(ParseError { msg: format!("{}", e) }),
     }
 }
 
