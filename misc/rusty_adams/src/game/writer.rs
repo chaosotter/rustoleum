@@ -53,12 +53,38 @@ fn write_actions<W: Write>(writer: &mut W, actions: &[Action]) -> std::io::Resul
 fn write_action<W: Write>(writer: &mut W, action: &Action) -> std::io::Result<()> {
     writeln!(writer, " {} ", action.verb_index * 150 + action.noun_index)?;
     for cond in action.conditions.iter() {
-        writeln!(writer, " {} ", cond.cond_type + 20 * cond.value)?;
+        write_condition(writer, cond)?;
     }
     for i in 0..2 {
         writeln!(writer, " {} ", action.actions[i * 2] * 150 + action.actions[i * 2 + 1])?;
     }
     Ok(())
+}
+
+/// Writes a single condition.
+fn write_condition<W: Write>(writer: &mut W, cond: &Condition) -> std::io::Result<()> {
+    writeln!(writer, " {} ", match cond {
+        Condition::Parameter(n) => 0 + (n * 20),
+        Condition::ItemCarried(n) => 1 + (n * 20),
+        Condition::ItemInRoom(n) => 2 + (n * 20),
+        Condition::ItemPresent(n) => 3 + (n * 20),
+        Condition::PlayerInRoom(n) => 4 + (n * 20),
+        Condition::ItemNotInRoom(n) => 5 + (n * 20),
+        Condition::ItemNotCarried(n) => 6 + (n * 20),
+        Condition::PlayerNotInRoom(n) => 7 + (n * 20),
+        Condition::BitSet(n) => 8 + (n * 20),
+        Condition::BitClear(n) => 9 + (n * 20),
+        Condition::InventoryNotEmpty(n) => 10 + (n * 20),
+        Condition::InventoryEmpty(n) => 11 + (n * 20),
+        Condition::ItemNotPresent(n) => 12 + (n * 20),
+        Condition::ItemInGame(n) => 13 + (n * 20),
+        Condition::ItemNotInGame(n) => 14 + (n * 28),
+        Condition::CounterLE(n) => 15 + (n * 20),
+        Condition::CounterGE(n) => 16 + (n * 20),
+        Condition::ItemMoved(n) => 17 + (n * 20),
+        Condition::ItemNotMoved(n) => 18 + (n * 20),
+        Condition::CounterEQ(n) => 19 + (n * 20),
+    })
 }
 
 /// Writes all words.

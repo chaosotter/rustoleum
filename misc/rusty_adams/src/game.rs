@@ -9,6 +9,7 @@ mod parser;
 pub mod writer;
 
 use crate::tokenizer;
+use std::fmt::{Display, Error, Formatter};
 
 /// Used in the `light_duration` field of the `Header` struct` to indicate that
 /// the light source never expires.
@@ -106,39 +107,58 @@ struct Action {
     comment: Option<String>,
 }
 
-/// Identifies a condition type.  We represent this as an i32 in preference to
-/// representing conditions as an Enum because there's (AFAIK) no way to
-/// initialize an Enum by discriminant, as we would logically do in the parser.
-type ConditionType = i32;
+/// Defines a condition, which is a parameterized predicate.
+#[derive(Debug)]
+#[repr(i32)]
+enum Condition {
+    Parameter(i32) = 0,
+    ItemCarried(i32) = 1,
+    ItemInRoom(i32) = 2,
+    ItemPresent(i32) = 3,
+    PlayerInRoom(i32) = 4,
+    ItemNotInRoom(i32) = 5,
+    ItemNotCarried(i32) = 6,
+    PlayerNotInRoom(i32) = 7,
+    BitSet(i32) = 8,
+    BitClear(i32) = 9,
+    InventoryNotEmpty(i32) = 10,
+    InventoryEmpty(i32) = 11,
+    ItemNotPresent(i32) = 12,
+    ItemInGame(i32) = 13,
+    ItemNotInGame(i32) = 14,
+    CounterLE(i32) = 15,
+    CounterGE(i32) = 16,
+    ItemMoved(i32) = 17,
+    ItemNotMoved(i32) = 18,
+    CounterEQ(i32) = 19,
+}
 
-const CONDITION_PARAMETER: ConditionType = 0;
-const CONDITION_ITEM_CARRIED: ConditionType = 1;
-const CONDITION_ITEM_IN_ROOM: ConditionType = 2;
-const CONDITION_ITEM_PRESENT: ConditionType = 3;
-const CONDITION_PLAYER_IN_ROOM: ConditionType = 4;
-const CONDITION_ITEM_NOT_IN_ROOM: ConditionType = 5;
-const CONDITION_ITEM_NOT_CARRIED: ConditionType = 6;
-const CONDITION_PLAYER_NOT_IN_ROOM: ConditionType = 7;
-const CONDITION_BIT_SET: ConditionType = 8;
-const CONDITION_BIT_CLEAR: ConditionType = 9;
-const CONDITION_INVENTORY_NOT_EMPTY: ConditionType = 10;
-const CONDITION_INVENTORY_EMPTY: ConditionType = 11;
-const CONDITION_ITEM_NOT_PRESENT: ConditionType = 12;
-const CONDITION_ITEM_IN_GAME: ConditionType = 13;
-const CONDITION_ITEM_NOT_IN_GAME: ConditionType = 14;
-const CONDITION_COUNTER_LE: ConditionType = 15;
-const CONDITION_COUNTER_GE: ConditionType = 16;
-const CONDITION_ITEM_MOVED: ConditionType = 17;
-const CONDITION_ITEM_NOT_MOVED: ConditionType = 18;
-const CONDITION_COUNTER_EQ: ConditionType = 19;
-
-/// Defines a single condition.
-#[derive(Debug, Default)]
-struct Condition {
-    /// The condition type.
-    cond_type: ConditionType,
-    /// The condition value.
-    value: i32,
+impl Display for Condition {
+    /// Makes a condition human-readable for debugging.
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        match self {
+            Condition::Parameter(n) => write!(f, "Action parameter {}", n),
+            Condition::ItemCarried(n) => write!(f, "Item {} carried?", n),
+            Condition::ItemInRoom(n) => write!(f, "Item {} in room?", n),
+            Condition::ItemPresent(n) => write!(f, "Item {} present?", n),
+            Condition::PlayerInRoom(n) => write!(f, "Player in room {}?", n),
+            Condition::ItemNotInRoom(n) => write!(f, "Item {} not in room?", n),
+            Condition::ItemNotCarried(n) => write!(f, "Item {} not carried?", n),
+            Condition::PlayerNotInRoom(n) => write!(f, "Player not in room {}?", n),
+            Condition::BitSet(n) => write!(f, "Bit flag {} set?", n),
+            Condition::BitClear(n) => write!(f, "Bit flag {} clear?", n),
+            Condition::InventoryNotEmpty(n) => write!(f, "Something is carried ({} ignored)?", n),
+            Condition::InventoryEmpty(n) => write!(f, "Nothing is carried ({} ignored)?", n),
+            Condition::ItemNotPresent(n) => write!(f, "Item {} not present?", n),
+            Condition::ItemInGame(n) => write!(f, "Item {} in the game?", n),
+            Condition::ItemNotInGame(n) => write!(f, "Item {} not in the game?", n),
+            Condition::CounterLE(n) => write!(f, "Current counter <= {}?", n),
+            Condition::CounterGE(n) => write!(f, "Current counter >= {}?", n),
+            Condition::ItemMoved(n) => write!(f, "Item {} moved?", n),
+            Condition::ItemNotMoved(n) => write!(f, "Item {} not moved?", n),
+            Condition::CounterEQ(n) => write!(f, "Current counter == {}?", n),
+        }
+    }
 }
 
 /// Identifies an action type.  We represent this as an i32 in preference to

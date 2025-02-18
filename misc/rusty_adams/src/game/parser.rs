@@ -67,13 +67,14 @@ fn parse_action(stream: &mut Stream) -> Result<Action, ParseError> {
     let verb_index = num / 150;
     let noun_index = num % 150;
 
-    let mut conditions = [(); 5].map(|_| Condition::default());
-    for cond in &mut conditions {
-        let num = _read_int(stream)?;
-        cond.cond_type = (num % 20) as ConditionType;
-        cond.value = num / 20;
-    }
-
+    let conditions = [
+        parse_condition(stream)?,
+        parse_condition(stream)?,
+        parse_condition(stream)?,
+        parse_condition(stream)?,
+        parse_condition(stream)?,
+    ];
+    
     let mut actions = [(); 4].map(|_| ActionType::default());
     for i in 0..2 {
         let num = _read_int(stream)?;
@@ -88,6 +89,36 @@ fn parse_action(stream: &mut Stream) -> Result<Action, ParseError> {
         actions,
         comment: None, // comments are after items in the game file
     })
+}
+
+/// Parses a single condition from the game file.  Each condition is expressed
+/// condition type + (20 * parameter).
+fn parse_condition(stream: &mut Stream) -> Result<Condition, ParseError> {
+    let num = _read_int(stream)?;
+    let param = num / 20;
+    match num % 20 {
+        0 => Ok(Condition::Parameter(param)),
+        1 => Ok(Condition::ItemCarried(param)),
+        2 => Ok(Condition::ItemInRoom(param)),
+        3 => Ok(Condition::ItemPresent(param)),
+        4 => Ok(Condition::PlayerInRoom(param)),
+        5 => Ok(Condition::ItemNotInRoom(param)),
+        6 => Ok(Condition::ItemNotCarried(param)),
+        7 => Ok(Condition::PlayerNotInRoom(param)),
+        8 => Ok(Condition::BitSet(param)),
+        9 => Ok(Condition::BitClear(param)),
+        10 => Ok(Condition::InventoryNotEmpty(param)),
+        11 => Ok(Condition::InventoryEmpty(param)),
+        12 => Ok(Condition::ItemNotPresent(param)),
+        13 => Ok(Condition::ItemInGame(param)),
+        14 => Ok(Condition::ItemNotInGame(param)),
+        15 => Ok(Condition::CounterLE(param)),
+        16 => Ok(Condition::CounterGE(param)),
+        17 => Ok(Condition::ItemMoved(param)),
+        18 => Ok(Condition::ItemNotMoved(param)),
+        19 => Ok(Condition::CounterEQ(param)),
+        _ => return Err(ParseError { msg: format!("Invalid condition (type {}, parameter {}", num % 20, param) })
+    }
 }
 
 /// Parses all of the words from the game file, which are an interleaved array
