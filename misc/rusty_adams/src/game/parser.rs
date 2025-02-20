@@ -74,13 +74,10 @@ fn parse_action(stream: &mut Stream) -> Result<Action, ParseError> {
         parse_condition(stream)?,
         parse_condition(stream)?,
     ];
-    
-    let mut actions = [(); 4].map(|_| ActionType::default());
-    for i in 0..2 {
-        let num = _read_int(stream)?;
-        actions[i * 2] = num / 150;
-        actions[i * 2 + 1] = num % 150;
-    }
+
+    let (a0, a1) = parse_action_type_pair(stream)?;
+    let (a2, a3) = parse_action_type_pair(stream)?;
+    let actions = [a0, a1, a2, a3];
 
     Ok(Action {
         verb_index,
@@ -95,30 +92,14 @@ fn parse_action(stream: &mut Stream) -> Result<Action, ParseError> {
 /// condition type + (20 * parameter).
 fn parse_condition(stream: &mut Stream) -> Result<Condition, ParseError> {
     let num = _read_int(stream)?;
-    let param = num / 20;
-    match num % 20 {
-        0 => Ok(Condition::Parameter(param)),
-        1 => Ok(Condition::ItemCarried(param)),
-        2 => Ok(Condition::ItemInRoom(param)),
-        3 => Ok(Condition::ItemPresent(param)),
-        4 => Ok(Condition::PlayerInRoom(param)),
-        5 => Ok(Condition::ItemNotInRoom(param)),
-        6 => Ok(Condition::ItemNotCarried(param)),
-        7 => Ok(Condition::PlayerNotInRoom(param)),
-        8 => Ok(Condition::BitSet(param)),
-        9 => Ok(Condition::BitClear(param)),
-        10 => Ok(Condition::InventoryNotEmpty(param)),
-        11 => Ok(Condition::InventoryEmpty(param)),
-        12 => Ok(Condition::ItemNotPresent(param)),
-        13 => Ok(Condition::ItemInGame(param)),
-        14 => Ok(Condition::ItemNotInGame(param)),
-        15 => Ok(Condition::CounterLE(param)),
-        16 => Ok(Condition::CounterGE(param)),
-        17 => Ok(Condition::ItemMoved(param)),
-        18 => Ok(Condition::ItemNotMoved(param)),
-        19 => Ok(Condition::CounterEQ(param)),
-        _ => return Err(ParseError { msg: format!("Invalid condition (type {}, parameter {}", num % 20, param) })
-    }
+    Ok(Condition::from_i32(num))
+}
+
+/// Parses a pair of action types from the game file.  We must parse two at a
+/// time because they are stored as (a0 * 150) + a1.
+fn parse_action_type_pair(stream: &mut Stream) -> Result<(ActionType, ActionType), ParseError> {
+    let num = _read_int(stream)?;
+    Ok((ActionType::from_i32(num / 150), ActionType::from_i32(num % 150)))
 }
 
 /// Parses all of the words from the game file, which are an interleaved array
